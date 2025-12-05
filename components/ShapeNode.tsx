@@ -1,5 +1,32 @@
 import React from 'react';
 
+// Types
+interface Node {
+  id: string;
+  type: string;
+  label: string;
+  value?: string;
+  position: { x: number; y: number };
+  metadata?: Record<string, unknown>;
+  connections?: { inputs: unknown[]; outputs: unknown[] };
+}
+
+interface ShapeNodeProps {
+  node: Node;
+  isSelected: boolean;
+  scale?: number;
+}
+
+interface PortProps {
+  cx: number;
+  cy: number;
+  type: string;
+  nodeId: string;
+  position: string;
+  color: string;
+  label?: string;
+}
+
 // Colors
 const COLORS = {
   neonGreen: '#00ff7f',
@@ -7,7 +34,14 @@ const COLORS = {
   black: '#000000'
 };
 
-const NODE_STYLES = {
+type NodeStyle = {
+  shape: string;
+  color: string;
+  glow: string;
+  strokeWidth?: number;
+};
+
+const NODE_STYLES: Record<string, NodeStyle> = {
   state: {
     shape: 'circle',
     color: COLORS.neonGreen,
@@ -35,20 +69,19 @@ const NODE_STYLES = {
     glow: `0 0 10px ${COLORS.neonYellow}44`
   },
   event: {
-    shape: 'triangle',
+    shape: 'parallelogram',
     color: COLORS.neonYellow,
     glow: `0 0 10px ${COLORS.neonYellow}44`
   }
 };
 
-export default function ShapeNode({ node, isSelected, scale = 1 }) {
-  const style = NODE_STYLES[node.type] || NODE_STYLES.state;
+export default function ShapeNode({ node, isSelected }: ShapeNodeProps) {
+  const style = NODE_STYLES[node.type as keyof typeof NODE_STYLES] || NODE_STYLES.state;
   
-  // Modifiers are smaller as per requirements
-  const size = node.type === 'modifier' ? 70 : 100; 
+  // All nodes are the same size
+  const size = 100; 
   const half = size / 2;
   
-  const isModifier = node.type === 'modifier';
   const isCondition = node.type === 'condition';
 
   // Determine Shape Path
@@ -79,16 +112,20 @@ export default function ShapeNode({ node, isSelected, scale = 1 }) {
         return <polygon points={`${half},5 ${size-5},${size*0.25} ${size-5},${size*0.75} ${half},${size-5} 5,${size*0.75} 5,${size*0.25}`} {...commonProps} />;
       
       case 'octagon':
-        // Approximation for octagon
-        const p = 29; // inset point
+        // Regular octagon (100px size)
         return <polygon points={`29,5 71,5 95,29 95,71 71,95 29,95 5,71 5,29`} {...commonProps} />;
       
       case 'square':
         return <rect x="10" y="10" width="80" height="80" rx="15" {...commonProps} />;
       
-      case 'triangle':
-        // Triangle pointing right
-        return <polygon points={`20,10 80,${half} 20,90`} {...commonProps} />;
+      case 'parallelogram':
+        // Parallelogram shape for event nodes - more slanted, wider, less tall
+        const skew = 30; // Increased horizontal skew for more slant and width
+        const topY = 15; // Start higher (less tall)
+        const bottomY = size - 15; // End higher (less tall)
+        const leftX = -5; // Start beyond edge (wider)
+        const rightX = size + 5; // End beyond edge (wider)
+        return <polygon points={`${leftX + skew},${topY} ${rightX},${topY} ${rightX - skew},${bottomY} ${leftX},${bottomY}`} {...commonProps} />;
         
       default:
         return <rect x="10" y="10" width="80" height="80" {...commonProps} />;
@@ -112,31 +149,36 @@ export default function ShapeNode({ node, isSelected, scale = 1 }) {
 
             {/* Operator Icon for Operation */}
             {node.type === 'operation' && (
-                <text x="50%" y="50%" dy=".3em" textAnchor="middle" fill={style.color} fontSize="24" fontWeight="bold">
+                <text x="50%" y="50%" dy=".3em" textAnchor="middle" fill={style.color} fontSize="18" fontWeight="bold">
                     {node.label.split(' ')[0] || 'Op'}
                 </text>
             )}
         </svg>
 
         {/* HTML Content Overlay (Labels, Ports) */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div 
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
             {/* Label styling based on node type */}
             {node.type !== 'operation' && (
                 <div 
                     className={`text-center px-2 break-words w-full leading-tight`}
                     style={{ 
                         color: style.color,
-                        fontSize: node.type === 'function' ? '9px' : node.type === 'state' ? '10px' : '9px',
+                        fontSize: node.type === 'function' ? '11px' : node.type === 'state' ? '12px' : node.type === 'modifier' ? '12px' : node.type === 'condition' ? '11px' : node.type === 'event' ? '11px' : '10px',
                         fontWeight: node.type === 'function' ? '600' : 'bold',
                         letterSpacing: node.type === 'function' ? '0.02em' : '0',
                         textShadow: '0 1px 2px rgba(0,0,0,0.8), 0 0 4px rgba(0,0,0,0.5)',
                         lineHeight: '1.2',
-                        maxWidth: '90%',
+                        maxWidth: node.type === 'modifier' ? '85%' : '90%',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: node.type === 'function' ? 2 : 3,
-                        WebkitBoxOrient: 'vertical'
+                        display: node.type === 'modifier' ? 'flex' : '-webkit-box',
+                        alignItems: node.type === 'modifier' ? 'center' : undefined,
+                        justifyContent: node.type === 'modifier' ? 'center' : undefined,
+                        WebkitLineClamp: node.type === 'function' ? 2 : node.type === 'modifier' ? 1 : 3,
+                        WebkitBoxOrient: node.type === 'modifier' ? 'horizontal' : 'vertical',
+                        textAlign: node.type === 'modifier' ? 'center' : undefined
                     }}
                 >
                     {node.label}
@@ -153,35 +195,48 @@ export default function ShapeNode({ node, isSelected, scale = 1 }) {
 
         {/* Connector Ports - Simple and Clear */}
         
-        {/* State: Right output only */}
+        {/* State: Left input (for setting/updating), Right output (for reading) */}
         {node.type === 'state' && (
-          <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} />
+          <>
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
+          </>
         )}
 
         {/* Function: Left input (modifiers), Right output (main flow) */}
         {node.type === 'function' && (
           <>
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} />
-            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} />
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
           </>
         )}
 
         {/* Operation: Left input, Right output */}
         {node.type === 'operation' && (
           <>
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} />
-            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} />
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
           </>
         )}
 
-        {/* Modifier: Bottom output to function */}
+        {/* Modifier: Left input, Right output */}
         {node.type === 'modifier' && (
-          <Port cx={half} cy={size} type="output" nodeId={node.id} position="bottom" color={style.color} />
+          <>
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
+          </>
         )}
 
-        {/* Event: Left input only */}
+        {/* Event: Left and right ports on the slanted side edges */}
         {node.type === 'event' && (
-          <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} />
+          <>
+            {/* Left slanted edge - positioned more outside */}
+            {/* Left edge goes from (25, 15) to (-5, 85), moving port further left */}
+            <Port cx={5} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
+            {/* Right slanted edge - positioned more outside */}
+            {/* Right edge goes from (105, 15) to (75, 85), moving port further right */}
+            <Port cx={95} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
+          </>
         )}
         
         {/* Condition: Left input, Right (T), Bottom (F) */}
@@ -189,17 +244,8 @@ export default function ShapeNode({ node, isSelected, scale = 1 }) {
           <>
             <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="T" />
             <Port cx={half} cy={size} type="output" nodeId={node.id} position="bottom" color={style.color} label="F" />
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} />
-          </>
-        )}
-        
-        {/* Diamond/Condition Specific Ports (True/False) */}
-        {isCondition && (
-          <>
-            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="T" />
-            <Port cx={half} cy={size} type="output" nodeId={node.id} position="bottom" color={style.color} label="F" />
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} />
-            <Port cx={half} cy={0} type="input" nodeId={node.id} position="top" color={style.color} />
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
+            <Port cx={half} cy={0} type="input" nodeId={node.id} position="top" color={style.color} label="" />
           </>
         )}
 
@@ -207,14 +253,24 @@ export default function ShapeNode({ node, isSelected, scale = 1 }) {
   );
 }
 
-function Port({ cx, cy, type, nodeId, position, color, label }) {
+function Port({ cx, cy, type, nodeId, position, color, label = '' }: PortProps) {
+    // Adjust port position to fit better on the edge - move inward
+    const offset = 3; // Move ports slightly inward from the edge
+    let adjustedCx = cx;
+    let adjustedCy = cy;
+    
+    if (position === 'left') adjustedCx = cx + offset; // Move right (inward)
+    if (position === 'right') adjustedCx = cx - offset; // Move left (inward)
+    if (position === 'top') adjustedCy = cy + offset; // Move down (inward)
+    if (position === 'bottom') adjustedCy = cy - offset; // Move up (inward)
+    
     return (
         <div 
             className={`
                 absolute w-4 h-4 -ml-2 -mt-2 rounded-full z-20 flex items-center justify-center
                 cursor-crosshair group/port
             `}
-            style={{ left: cx, top: cy }}
+            style={{ left: adjustedCx, top: adjustedCy }}
             data-port-id={`${nodeId}:${position}`}
             data-port-type={type}
         >

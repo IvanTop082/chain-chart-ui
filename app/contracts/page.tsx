@@ -1,25 +1,48 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MoreVertical, Box, FileCode, Calendar, ArrowRight } from 'lucide-react';
+import { Search, MoreVertical, Box, FileCode, Calendar, ArrowRight, LogOut } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import Link from 'next/link';
-import { getProjects, type Project } from '@/lib/storage';
+import { getProjects, deleteProject, type Project } from '@/lib/supabase/storage';
+import { useAuth } from '@/lib/auth-context';
+import Navigation from '@/components/Navigation';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function Contracts() {
+  const router = useRouter();
+  const { user, loading: authLoading, signOut } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load projects from local storage
-    const loadedProjects = getProjects();
-    // Use setTimeout to avoid synchronous setState in effect
-    setTimeout(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push('/');
+        return;
+      }
+      loadProjects();
+    }
+  }, [user, authLoading, router]);
+
+  const loadProjects = async () => {
+    try {
+      setLoading(true);
+      const loadedProjects = await getProjects();
       setProjects(loadedProjects);
-    }, 0);
-  }, []);
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter projects based on search query
   const filteredProjects = projects.filter(project => 
@@ -27,18 +50,74 @@ export default function Contracts() {
     project.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (authLoading || loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-black">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect
+  }
+
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setProjectToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+    
+    try {
+      await deleteProject(projectToDelete);
+      await loadProjects();
+      toast.success('Project deleted', {
+        description: 'The project has been permanently removed.',
+      });
+      setProjectToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      toast.error('Failed to delete project', {
+        description: 'An error occurred while deleting. Please try again.',
+      });
+    }
+  };
+
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
+      <Navigation />
+      <div className="flex-1 overflow-y-auto p-8 max-w-7xl mx-auto w-full scrollbar-hide">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">My Contracts</h1>
           <p className="text-gray-400">Manage and deploy your blockchain logic</p>
         </div>
-        <Link href={createPageUrl('Builder')}>
-            <Button className="bg-neon-yellow text-black hover:bg-[#DCD008] font-bold">
-            + New Contract
+        <div className="flex items-center gap-3">
+          <Link href={createPageUrl('Builder')}>
+            <Button 
+              className="bg-neon-yellow text-black hover:bg-[#DCD008] font-bold"
+              style={{
+                backgroundColor: '#F4E409',
+                boxShadow: '0 0 20px rgba(244, 228, 9, 0.4)'
+              }}
+            >
+              + New Contract
             </Button>
-        </Link>
+          </Link>
+          <Button 
+            variant="ghost" 
+            className="text-gray-400 hover:text-white"
+            onClick={async () => {
+              await signOut();
+              router.push('/');
+            }}
+          >
+            <LogOut className="w-4 h-4 mr-2" /> Sign Out
+          </Button>
+        </div>
       </div>
 
       {/* Filter Bar */}
@@ -67,8 +146,9 @@ export default function Contracts() {
           </div>
         ) : (
           filteredProjects.map((project) => (
-          <div 
+          <div
             key={project.id}
+            onClick={() => router.push(`${createPageUrl('Builder')}?projectId=${project.id}`)}
             className="group bg-black border border-white/10 rounded-2xl p-6 hover:border-neon-yellow/50 hover:shadow-[0_0_20px_rgba(244,228,9,0.1)] transition-all duration-300 cursor-pointer relative overflow-hidden"
           >
              {/* Glow Effect on Hover */}
@@ -78,7 +158,12 @@ export default function Contracts() {
               <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 group-hover:border-neon-yellow/30 group-hover:scale-105 transition-all">
                 <Box className="w-6 h-6 text-neon-yellow" />
               </div>
-              <Button variant="ghost" size="icon" className="text-gray-500 hover:text-white">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-gray-500 hover:text-white"
+                onClick={(e) => handleDeleteClick(project.id, e)}
+              >
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </div>
@@ -94,7 +179,7 @@ export default function Contracts() {
                     </div>
                     <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>{project.created_date ? new Date(project.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Just now'}</span>
+                        <span>{project.created_at ? new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Just now'}</span>
                     </div>
                 </div>
 
@@ -105,15 +190,27 @@ export default function Contracts() {
                     `}>
                         {project.status}
                     </span>
-                    <Link href={createPageUrl('Builder')} className="text-neon-yellow hover:text-white transition-colors">
-                        <ArrowRight className="w-5 h-5" />
-                    </Link>
+                    <div className="text-neon-yellow group-hover:text-white transition-colors">
+                      <ArrowRight className="w-5 h-5" />
+                    </div>
                 </div>
             </div>
           </div>
         ))
         )}
       </div>
+      </div>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Project"
+        description="Are you sure you want to delete this project? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+      />
     </div>
   );
 }

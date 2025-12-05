@@ -15,3 +15,4 @@ export function createPageUrl(pageName: string): string {
   return pageMap[pageName] || `/${pageName.toLowerCase()}`;
 }
 
+

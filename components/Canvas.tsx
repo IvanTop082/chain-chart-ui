@@ -13,7 +13,9 @@ export default function Canvas({
     onSelectNode, 
     selectedNodeId,
     onConnect,
-    onViewChange
+    onViewChange,
+    onDrop,
+    onDragOver
 }) {
     const containerRef = useRef(null);
     const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -184,6 +186,48 @@ export default function Canvas({
         return { x: node.position.x + offset.x, y: node.position.y + offset.y };
     };
 
+    // --- Drag & Drop Handlers ---
+    const handleDropInternal = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onDrop) {
+            // Calculate world coordinates from screen coordinates
+            const rect = containerRef.current.getBoundingClientRect();
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+            
+            // Node size is 100px, so center offset is 50px
+            const NODE_SIZE = 100;
+            const NODE_CENTER_OFFSET = NODE_SIZE / 2;
+            
+            // Adjust coordinates so cursor is at center of node
+            const worldX = (screenX - transform.x) / transform.k - NODE_CENTER_OFFSET;
+            const worldY = (screenY - transform.y) / transform.k - NODE_CENTER_OFFSET;
+            
+            // Create a synthetic event with world coordinates, preserving the original event methods
+            const syntheticEvent = {
+                ...e,
+                worldX,
+                worldY,
+                transform,
+                preventDefault: () => e.preventDefault(),
+                stopPropagation: () => e.stopPropagation(),
+                dataTransfer: e.dataTransfer
+            };
+            onDrop(syntheticEvent);
+        }
+    };
+
+    const handleDragOverInternal = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onDragOver) {
+            onDragOver(e);
+        } else {
+            e.dataTransfer.dropEffect = 'move';
+        }
+    };
+
     // --- Render ---
     return (
         <div 
@@ -194,6 +238,8 @@ export default function Canvas({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onDrop={handleDropInternal}
+            onDragOver={handleDragOverInternal}
         >
             {/* Grid Background */}
             <div 
