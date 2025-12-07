@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { ChainChartWalletProvider } from "@/lib/wallet-provider";
+import { ThemeProvider } from "@/lib/theme-context";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -25,26 +27,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground transition-colors`}
       >
-        <AuthProvider>
-          {children}
-          <Toaster 
-            position="top-right" 
-            richColors
-            closeButton
-            toastOptions={{
-              style: {
-                background: '#000',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#fff',
-              },
-              className: 'toast',
-            }}
-          />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ChainChartWalletProvider>
+              {children}
+            </ChainChartWalletProvider>
+            <Toaster 
+              position="top-right" 
+              richColors
+              closeButton
+            />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

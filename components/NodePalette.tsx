@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { Circle, Square, Hexagon, Box, MousePointer2 } from 'lucide-react';
+import { useTheme } from '@/lib/theme-context';
 
 // Custom Parallelogram Icon Component
 const ParallelogramIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => {
@@ -99,11 +100,11 @@ function DraggableNodeItem({ item, onAddNode }: { item: typeof NODE_TYPES[0]; on
       onClick={() => onAddNode(item.type)}
       whileHover={{ scale: 1.02, x: 4 }}
       whileTap={{ scale: 0.98 }}
-      className="group cursor-grab active:cursor-grabbing p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
+      className="group cursor-grab active:cursor-grabbing p-3 rounded-lg border border-border bg-muted/50 hover:bg-muted hover:border-primary/50 transition-all"
     >
       <div className="flex items-center gap-3 mb-1">
         <div 
-          className="w-8 h-8 flex items-center justify-center rounded bg-black border"
+          className="w-8 h-8 flex items-center justify-center rounded bg-background border"
           style={{ borderColor: item.color, color: item.color }}
         >
           {item.type === 'event' ? (
@@ -113,10 +114,10 @@ function DraggableNodeItem({ item, onAddNode }: { item: typeof NODE_TYPES[0]; on
           )}
         </div>
         <div>
-          <div className="text-sm font-bold text-white group-hover:text-neon-yellow transition-colors">
+          <div className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
             {item.label}
           </div>
-          <div className="text-[10px] text-gray-500 font-mono leading-tight">
+          <div className="text-[10px] text-muted-foreground font-mono leading-tight">
             {item.description}
           </div>
         </div>
@@ -126,10 +127,11 @@ function DraggableNodeItem({ item, onAddNode }: { item: typeof NODE_TYPES[0]; on
 }
 
 export default function NodePalette({ onAddNode }: { onAddNode: (type: string) => void }) {
+  const { theme } = useTheme();
   return (
-    <div className="w-64 bg-black border-r border-white/10 flex flex-col h-full relative shadow-xl" style={{ zIndex: 10 }}>
-      <div className="p-4 border-b border-white/10 bg-white/5">
-        <h2 className="text-sm font-bold text-neon-yellow uppercase tracking-wider flex items-center gap-2">
+    <div className="w-64 bg-card/80 backdrop-blur-xl border-r border-border flex flex-col h-full relative shadow-xl" style={{ zIndex: 10 }}>
+      <div className="p-4 border-b border-border bg-muted/40 backdrop-blur-sm">
+        <h2 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
           <MousePointer2 className="w-4 h-4" /> Logic Shapes
         </h2>
       </div>
@@ -140,8 +142,8 @@ export default function NodePalette({ onAddNode }: { onAddNode: (type: string) =
         ))}
       </div>
       
-      <div className="p-4 border-t border-white/10 bg-white/5">
-        <div className="text-xs text-gray-500 text-center font-mono">
+      <div className="p-4 border-t border-border bg-muted/40 backdrop-blur-sm">
+        <div className="text-xs text-muted-foreground text-center font-mono">
           Drag shapes to canvas
         </div>
       </div>

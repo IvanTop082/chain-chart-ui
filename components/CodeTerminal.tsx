@@ -4,7 +4,13 @@ import React, { useState, useMemo } from 'react';
 import { Terminal, Copy, Download, PlayCircle, Check } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
-export default function CodeTerminal({ nodes, edges }) {
+interface CodeTerminalProps {
+  nodes: any[];
+  edges: any[];
+  executionResults?: any;
+}
+
+export default function CodeTerminal({ nodes, edges, executionResults = null }: CodeTerminalProps) {
   const [copied, setCopied] = useState(false);
 
   // Enhanced code generation logic
@@ -184,17 +190,17 @@ contract ChainChartContract {
   };
 
   return (
-    <div className="h-64 bg-black border-t border-white/10 flex flex-col font-mono text-sm z-20">
-      <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
+    <div className="h-64 bg-card/80 backdrop-blur-xl border-t border-border flex flex-col font-mono text-sm z-20">
+      <div className="flex items-center justify-between px-4 py-2 bg-muted/40 backdrop-blur-sm border-b border-border">
         <div className="flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-emerald-green" />
-          <span className="text-emerald-green font-bold text-xs tracking-widest uppercase">Live Preview</span>
+          <Terminal className="w-4 h-4 text-emerald-500" />
+          <span className="text-emerald-500 font-bold text-xs tracking-widest uppercase">Live Preview</span>
         </div>
         <div className="flex items-center gap-2">
           <Button 
             size="sm" 
             variant="ghost" 
-            className="h-7 text-xs text-gray-400 hover:text-white"
+            className="h-7 text-xs text-muted-foreground hover:text-foreground"
             onClick={handleCopy}
           >
             {copied ? (
@@ -210,26 +216,62 @@ contract ChainChartContract {
           <Button 
             size="sm" 
             variant="ghost" 
-            className="h-7 text-xs text-gray-400 hover:text-white"
+            className="h-7 text-xs text-muted-foreground hover:text-foreground"
             onClick={handleExport}
           >
             <Download className="w-3 h-3 mr-1" /> Export
           </Button>
         </div>
       </div>
-      <div className="flex-1 p-4 overflow-auto relative custom-scrollbar">
-        <pre className="text-gray-300 leading-relaxed font-mono text-xs">
-          <code className="language-solidity whitespace-pre">
-            {generateCode}
-          </code>
-        </pre>
+      <div className="flex-1 p-4 overflow-auto relative custom-scrollbar bg-background">
+        {executionResults ? (
+          <div className="text-foreground font-mono text-xs">
+            <div className="mb-4">
+              <div className="text-emerald-500 font-bold mb-2">Execution Results:</div>
+              <div className="text-muted-foreground mb-1">Status: {executionResults.success ? '✅ Success' : '❌ Failed'}</div>
+              <div className="text-muted-foreground mb-1">Steps: {executionResults.execution_logs?.length || 0}</div>
+              {executionResults.error && (
+                <div className="text-destructive mb-2">Error: {executionResults.error}</div>
+              )}
+            </div>
+            {executionResults.execution_logs && executionResults.execution_logs.length > 0 && (
+              <div className="mb-4">
+                <div className="text-emerald-500 font-bold mb-2">Execution Logs:</div>
+                {executionResults.execution_logs.map((log: any, idx: number) => (
+                  <div key={idx} className="mb-2 pl-4 border-l-2 border-border">
+                    <div className="text-foreground">Step {log.step}: {log.type} - {log.node}</div>
+                    {log.method && <div className="text-muted-foreground pl-2">Method: {log.method}()</div>}
+                    {log.output && log.output.result && (
+                      <div className="text-muted-foreground pl-2">Result: {JSON.stringify(log.output.result)}</div>
+                    )}
+                    {log.output && log.output.state && (
+                      <div className="text-muted-foreground pl-2">State: {log.output.state}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {executionResults.final_memory && Object.keys(executionResults.final_memory).length > 0 && (
+              <div>
+                <div className="text-emerald-500 font-bold mb-2">Final Memory:</div>
+                <pre className="text-muted-foreground pl-4">{JSON.stringify(executionResults.final_memory, null, 2)}</pre>
+              </div>
+            )}
+          </div>
+        ) : (
+          <pre className="text-foreground leading-relaxed font-mono text-xs">
+            <code className="language-solidity whitespace-pre">
+              {generateCode}
+            </code>
+          </pre>
+        )}
       </div>
-      <div className="px-4 py-3 border-t border-white/10 bg-white/5 flex justify-between items-center">
+      <div className="px-4 py-3 border-t border-border bg-muted/40 backdrop-blur-sm flex justify-between items-center">
         <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-emerald-green rounded-full animate-pulse" />
-            <span className="text-xs text-gray-400">Compiler Ready v0.8.19</span>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-xs text-muted-foreground">Compiler Ready v0.8.19</span>
         </div>
-        <Button className="bg-neon-yellow text-black hover:bg-[#DCD008] font-bold text-xs px-6">
+        <Button className="bg-primary text-primary-foreground hover:opacity-90 font-bold text-xs px-6">
             <PlayCircle className="w-4 h-4 mr-2" />
             DEPLOY TO TESTNET
         </Button>

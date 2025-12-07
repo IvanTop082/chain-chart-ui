@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '@/lib/theme-context';
 
 // Types
 interface Node {
@@ -27,16 +28,38 @@ interface PortProps {
   label?: string;
 }
 
-// Colors
+// Professional color palette - more variety
 const COLORS = {
-  neonGreen: '#00ff7f',
-  neonYellow: '#ffee58',
-  black: '#000000'
+  // Primary colors
+  emerald: '#10b981',      // Green - State
+  blue: '#3b82f6',         // Blue - Function
+  purple: '#8b5cf6',       // Purple - Operation
+  amber: '#f59e0b',        // Amber - Condition
+  rose: '#f43f5e',         // Rose - Modifier
+  cyan: '#06b6d4',         // Cyan - Event
+  
+  // Dark mode variants (more vibrant)
+  emeraldDark: '#34d399',
+  blueDark: '#60a5fa',
+  purpleDark: '#a78bfa',
+  amberDark: '#fbbf24',
+  roseDark: '#fb7185',
+  cyanDark: '#22d3ee',
+  
+  // Light mode variants (more muted)
+  emeraldLight: '#059669',
+  blueLight: '#2563eb',
+  purpleLight: '#7c3aed',
+  amberLight: '#d97706',
+  roseLight: '#e11d48',
+  cyanLight: '#0891b2',
 };
 
 type NodeStyle = {
   shape: string;
   color: string;
+  colorLight: string;
+  colorDark: string;
   glow: string;
   strokeWidth?: number;
 };
@@ -44,38 +67,51 @@ type NodeStyle = {
 const NODE_STYLES: Record<string, NodeStyle> = {
   state: {
     shape: 'circle',
-    color: COLORS.neonGreen,
-    glow: `0 0 15px ${COLORS.neonGreen}66`
+    color: COLORS.emerald,
+    colorLight: COLORS.emeraldLight,
+    colorDark: COLORS.emeraldDark,
+    glow: `0 0 15px currentColor`
   },
   condition: {
     shape: 'diamond',
-    color: COLORS.neonYellow,
-    glow: `0 0 15px ${COLORS.neonYellow}66`
+    color: COLORS.amber,
+    colorLight: COLORS.amberLight,
+    colorDark: COLORS.amberDark,
+    glow: `0 0 15px currentColor`
   },
   function: {
     shape: 'hexagon',
-    color: COLORS.neonGreen,
+    color: COLORS.blue,
+    colorLight: COLORS.blueLight,
+    colorDark: COLORS.blueDark,
     strokeWidth: 2,
-    glow: `0 0 10px ${COLORS.neonGreen}44`
+    glow: `0 0 10px currentColor`
   },
   operation: {
     shape: 'square',
-    color: COLORS.neonGreen,
-    glow: `0 0 10px ${COLORS.neonGreen}44`
+    color: COLORS.purple,
+    colorLight: COLORS.purpleLight,
+    colorDark: COLORS.purpleDark,
+    glow: `0 0 10px currentColor`
   },
   modifier: {
     shape: 'octagon',
-    color: COLORS.neonYellow,
-    glow: `0 0 10px ${COLORS.neonYellow}44`
+    color: COLORS.rose,
+    colorLight: COLORS.roseLight,
+    colorDark: COLORS.roseDark,
+    glow: `0 0 10px currentColor`
   },
   event: {
     shape: 'parallelogram',
-    color: COLORS.neonYellow,
-    glow: `0 0 10px ${COLORS.neonYellow}44`
+    color: COLORS.cyan,
+    colorLight: COLORS.cyanLight,
+    colorDark: COLORS.cyanDark,
+    glow: `0 0 10px currentColor`
   }
 };
 
 export default function ShapeNode({ node, isSelected }: ShapeNodeProps) {
+  const { theme } = useTheme();
   const style = NODE_STYLES[node.type as keyof typeof NODE_STYLES] || NODE_STYLES.state;
   
   // All nodes are the same size
@@ -83,13 +119,17 @@ export default function ShapeNode({ node, isSelected }: ShapeNodeProps) {
   const half = size / 2;
   
   const isCondition = node.type === 'condition';
+  
+  // Get color based on theme
+  const nodeColor = theme === 'dark' ? style.colorDark : style.colorLight;
+  const fillColor = theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)';
 
   // Determine Shape Path
   const renderShape = () => {
-    const stroke = style.color;
-    const fill = '#000000';
-    const strokeWidth = isSelected ? 3 : (style.strokeWidth || 1.5);
-    const filter = isSelected ? `drop-shadow(${style.glow})` : 'none';
+    const stroke = nodeColor;
+    const fill = fillColor;
+    const strokeWidth = isSelected ? 3 : (style.strokeWidth || 2);
+    const filter = isSelected ? `drop-shadow(${style.glow.replace('currentColor', nodeColor)})` : 'none';
     
     const commonProps = {
       stroke,
@@ -149,7 +189,7 @@ export default function ShapeNode({ node, isSelected }: ShapeNodeProps) {
 
             {/* Operator Icon for Operation */}
             {node.type === 'operation' && (
-                <text x="50%" y="50%" dy=".3em" textAnchor="middle" fill={style.color} fontSize="18" fontWeight="bold">
+                <text x="50%" y="50%" dy=".3em" textAnchor="middle" fill={nodeColor} fontSize="12" fontWeight="bold">
                     {node.label.split(' ')[0] || 'Op'}
                 </text>
             )}
@@ -164,11 +204,13 @@ export default function ShapeNode({ node, isSelected }: ShapeNodeProps) {
                 <div 
                     className={`text-center px-2 break-words w-full leading-tight`}
                     style={{ 
-                        color: style.color,
+                        color: nodeColor,
                         fontSize: node.type === 'function' ? '11px' : node.type === 'state' ? '12px' : node.type === 'modifier' ? '12px' : node.type === 'condition' ? '11px' : node.type === 'event' ? '11px' : '10px',
                         fontWeight: node.type === 'function' ? '600' : 'bold',
                         letterSpacing: node.type === 'function' ? '0.02em' : '0',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.8), 0 0 4px rgba(0,0,0,0.5)',
+                        textShadow: theme === 'dark' 
+                            ? '0 1px 2px rgba(0,0,0,0.8), 0 0 4px rgba(0,0,0,0.5)' 
+                            : '0 1px 2px rgba(255,255,255,0.8), 0 0 4px rgba(255,255,255,0.5)',
                         lineHeight: '1.2',
                         maxWidth: node.type === 'modifier' ? '85%' : '90%',
                         overflow: 'hidden',
@@ -188,7 +230,7 @@ export default function ShapeNode({ node, isSelected }: ShapeNodeProps) {
 
         {/* Metadata Tooltip on Hover */}
         {node.value && (
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black border border-white/20 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-popover border border-border text-popover-foreground text-[10px] px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
                 Value: {node.value}
             </div>
         )}
@@ -198,32 +240,32 @@ export default function ShapeNode({ node, isSelected }: ShapeNodeProps) {
         {/* State: Left input (for setting/updating), Right output (for reading) */}
         {node.type === 'state' && (
           <>
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
-            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={nodeColor} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={nodeColor} label="" />
           </>
         )}
 
         {/* Function: Left input (modifiers), Right output (main flow) */}
         {node.type === 'function' && (
           <>
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
-            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={nodeColor} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={nodeColor} label="" />
           </>
         )}
 
         {/* Operation: Left input, Right output */}
         {node.type === 'operation' && (
           <>
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
-            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={nodeColor} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={nodeColor} label="" />
           </>
         )}
 
         {/* Modifier: Left input, Right output */}
         {node.type === 'modifier' && (
           <>
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
-            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={nodeColor} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={nodeColor} label="" />
           </>
         )}
 
@@ -232,20 +274,20 @@ export default function ShapeNode({ node, isSelected }: ShapeNodeProps) {
           <>
             {/* Left slanted edge - positioned more outside */}
             {/* Left edge goes from (25, 15) to (-5, 85), moving port further left */}
-            <Port cx={5} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
+            <Port cx={5} cy={half} type="input" nodeId={node.id} position="left" color={nodeColor} label="" />
             {/* Right slanted edge - positioned more outside */}
             {/* Right edge goes from (105, 15) to (75, 85), moving port further right */}
-            <Port cx={95} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="" />
+            <Port cx={95} cy={half} type="output" nodeId={node.id} position="right" color={nodeColor} label="" />
           </>
         )}
         
         {/* Condition: Left input, Right (T), Bottom (F) */}
         {isCondition && (
           <>
-            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={style.color} label="T" />
-            <Port cx={half} cy={size} type="output" nodeId={node.id} position="bottom" color={style.color} label="F" />
-            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={style.color} label="" />
-            <Port cx={half} cy={0} type="input" nodeId={node.id} position="top" color={style.color} label="" />
+            <Port cx={size} cy={half} type="output" nodeId={node.id} position="right" color={nodeColor} label="T" />
+            <Port cx={half} cy={size} type="output" nodeId={node.id} position="bottom" color={nodeColor} label="F" />
+            <Port cx={0} cy={half} type="input" nodeId={node.id} position="left" color={nodeColor} label="" />
+            <Port cx={half} cy={0} type="input" nodeId={node.id} position="top" color={nodeColor} label="" />
           </>
         )}
 

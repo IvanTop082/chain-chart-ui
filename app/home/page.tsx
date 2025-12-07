@@ -133,12 +133,12 @@ export default function Home() {
   );
 }
 
-function FeatureCard({ icon: Icon, title, desc, color }) {
+function FeatureCard({ icon: Icon, title, desc, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; title: string; desc: string; color: string }) {
   const colorValue = color.includes('neon-yellow') ? '#F4E409' : color.includes('emerald-green') ? '#00ff7f' : '#a855f7';
   
   return (
     <div 
-      className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all group relative overflow-hidden"
+      className="p-6 rounded-2xl bg-card/50 border border-border backdrop-blur-sm hover:bg-card transition-all group relative overflow-hidden"
       style={{
         boxShadow: '0 0 20px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.02)'
       }}
@@ -152,7 +152,7 @@ function FeatureCard({ icon: Icon, title, desc, color }) {
       }}
     >
       <div 
-        className="w-12 h-12 rounded-xl bg-black flex items-center justify-center mb-4 border transition-all relative overflow-hidden"
+        className="w-12 h-12 rounded-xl bg-background flex items-center justify-center mb-4 border transition-all relative overflow-hidden"
         style={{
           borderColor: 'rgba(255, 255, 255, 0.1)',
           boxShadow: `0 0 10px ${colorValue}20`
@@ -173,8 +173,8 @@ function FeatureCard({ icon: Icon, title, desc, color }) {
           }}
         />
       </div>
-      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-      <p className="text-gray-400 leading-relaxed">{desc}</p>
+      <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed">{desc}</p>
     </div>
   );
 }

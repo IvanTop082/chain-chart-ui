@@ -7,21 +7,30 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTheme } from '@/lib/theme-context';
 
-export default function Inspector({ selectedNode, onUpdateNode, onDeleteNode, onClose }) {
+interface InspectorProps {
+  selectedNode: any;
+  onUpdateNode: (id: string, data: any) => void;
+  onDeleteNode: (nodeId: string) => void;
+  onClose: () => void;
+}
+
+export default function Inspector({ selectedNode, onUpdateNode, onDeleteNode, onClose }: InspectorProps) {
+  const { theme } = useTheme();
   if (!selectedNode) return null;
 
-  const handleChange = (field, value) => {
+  const handleChange = (field: string, value: any) => {
     onUpdateNode(selectedNode.id, { [field]: value });
   };
 
-  const handleMetadataChange = (field, value) => {
+  const handleMetadataChange = (field: string, value: any) => {
     onUpdateNode(selectedNode.id, { 
       metadata: { ...selectedNode.metadata, [field]: value } 
     });
   };
 
-  const getNodeColor = (type) => {
+  const getNodeColor = (type: string) => {
     if (['state', 'function', 'operation'].includes(type)) return '#00ff7f'; // Neon Green
     return '#ffee58'; // Neon Yellow
   };
@@ -29,29 +38,29 @@ export default function Inspector({ selectedNode, onUpdateNode, onDeleteNode, on
   const color = getNodeColor(selectedNode.type);
 
   return (
-    <div className="w-80 bg-black border-l border-white/10 flex flex-col h-full z-30 shadow-xl absolute right-0 top-0 bottom-0">
-      <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/5">
+    <div className="w-80 bg-card/80 backdrop-blur-xl border-l border-border flex flex-col h-full z-30 shadow-xl absolute right-0 top-0 bottom-0">
+      <div className="p-5 border-b border-border flex items-center justify-between bg-muted/40 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <div 
             className="w-3 h-3 rounded-full shadow-[0_0_8px_currentColor]"
             style={{ backgroundColor: color, color: color }} 
           />
-          <h2 className="font-bold text-sm uppercase tracking-wider text-white">
+          <h2 className="font-bold text-sm uppercase tracking-wider text-foreground">
             {selectedNode.type} Node
           </h2>
         </div>
-        <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
         <div className="space-y-3">
-          <Label className="text-xs text-gray-400 uppercase font-bold">Node Label</Label>
+          <Label className="text-xs text-muted-foreground uppercase font-bold">Node Label</Label>
           <Input 
             value={selectedNode.label}
             onChange={(e) => handleChange('label', e.target.value)}
-            className="bg-black border-white/20 focus:border-neon-yellow text-white font-medium"
+            className="bg-background border-border focus:border-primary text-foreground font-medium"
             placeholder="Enter label..."
           />
         </div>
@@ -64,7 +73,7 @@ export default function Inspector({ selectedNode, onUpdateNode, onDeleteNode, on
                 value={selectedNode.metadata?.dataType || 'uint256'} 
                 onValueChange={(v) => handleMetadataChange('dataType', v)}
              >
-                <SelectTrigger className="bg-black border-white/20 text-white">
+                <SelectTrigger className="bg-background border-border text-foreground">
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -75,19 +84,19 @@ export default function Inspector({ selectedNode, onUpdateNode, onDeleteNode, on
                 </SelectContent>
              </Select>
 
-             <Label className="text-xs text-gray-400 uppercase font-bold">Initial Value</Label>
+             <Label className="text-xs text-muted-foreground uppercase font-bold">Initial Value</Label>
              <Input 
                 value={selectedNode.value || ''}
                 onChange={(e) => handleChange('value', e.target.value)}
-                className="bg-black border-white/20 text-white font-mono"
+                className="bg-background border-border text-foreground font-mono"
                 placeholder="0x..."
              />
-             <Label className="text-xs text-gray-400 uppercase font-bold">Visibility</Label>
+             <Label className="text-xs text-muted-foreground uppercase font-bold">Visibility</Label>
              <Select 
                 value={selectedNode.metadata?.visibility || 'public'} 
                 onValueChange={(v) => handleMetadataChange('visibility', v)}
              >
-                <SelectTrigger className="bg-black border-white/20 text-white">
+                <SelectTrigger className="bg-background border-border text-foreground">
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -101,11 +110,11 @@ export default function Inspector({ selectedNode, onUpdateNode, onDeleteNode, on
 
         {selectedNode.type === 'condition' && (
              <div className="space-y-3">
-                <Label className="text-xs text-gray-400 uppercase font-bold">Condition Expression</Label>
+                <Label className="text-xs text-muted-foreground uppercase font-bold">Condition Expression</Label>
                 <Textarea 
                     value={selectedNode.metadata?.expression || ''}
                     onChange={(e) => handleMetadataChange('expression', e.target.value)}
-                    className="bg-black border-white/20 text-white font-mono text-xs h-24"
+                    className="bg-background border-border text-foreground font-mono text-xs h-24"
                     placeholder="msg.sender == owner"
                 />
              </div>
@@ -113,14 +122,14 @@ export default function Inspector({ selectedNode, onUpdateNode, onDeleteNode, on
 
         {selectedNode.type === 'function' && (
             <div className="space-y-3">
-                <Label className="text-xs text-gray-400 uppercase font-bold">Parameters</Label>
+                <Label className="text-xs text-muted-foreground uppercase font-bold">Parameters</Label>
                 <Input 
                     value={selectedNode.metadata?.params || ''}
                     onChange={(e) => handleMetadataChange('params', e.target.value)}
-                    className="bg-black border-white/20 text-white font-mono text-xs"
+                    className="bg-background border-border text-foreground font-mono text-xs"
                     placeholder="address to, uint256 amount"
                 />
-                <Label className="text-xs text-gray-400 uppercase font-bold">Visibility</Label>
+                <Label className="text-xs text-muted-foreground uppercase font-bold">Visibility</Label>
                 <Select 
                     value={selectedNode.metadata?.visibility || 'public'} 
                     onValueChange={(v) => handleMetadataChange('visibility', v)}
@@ -140,60 +149,60 @@ export default function Inspector({ selectedNode, onUpdateNode, onDeleteNode, on
                         type="checkbox" 
                         checked={selectedNode.metadata?.payable || false}
                         onChange={(e) => handleMetadataChange('payable', e.target.checked)}
-                        className="rounded border-gray-600 bg-black text-neon-yellow focus:ring-neon-yellow"
+                        className="rounded border-border bg-background text-primary focus:ring-primary"
                     />
-                    <span className="text-sm text-gray-300">Payable</span>
+                    <span className="text-sm text-foreground">Payable</span>
                 </div>
             </div>
         )}
 
         {selectedNode.type === 'operation' && (
             <div className="space-y-3">
-                <Label className="text-xs text-gray-400 uppercase font-bold">Operation Expression</Label>
+                <Label className="text-xs text-muted-foreground uppercase font-bold">Operation Expression</Label>
                 <Textarea 
                     value={selectedNode.value || ''}
                     onChange={(e) => handleChange('value', e.target.value)}
-                    className="bg-black border-white/20 text-white font-mono text-xs h-24"
+                    className="bg-background border-border text-foreground font-mono text-xs h-24"
                     placeholder="balance += amount;"
                 />
-                <p className="text-xs text-gray-500">Enter Solidity code for this operation</p>
+                <p className="text-xs text-muted-foreground">Enter Solidity code for this operation</p>
             </div>
         )}
 
         {selectedNode.type === 'modifier' && (
             <div className="space-y-3">
-                <Label className="text-xs text-gray-400 uppercase font-bold">Access Condition</Label>
+                <Label className="text-xs text-muted-foreground uppercase font-bold">Access Condition</Label>
                 <Textarea 
                     value={selectedNode.metadata?.expression || ''}
                     onChange={(e) => handleMetadataChange('expression', e.target.value)}
-                    className="bg-black border-white/20 text-white font-mono text-xs h-24"
+                    className="bg-background border-border text-foreground font-mono text-xs h-24"
                     placeholder="msg.sender == owner"
                 />
-                <p className="text-xs text-gray-500">Boolean expression for access control</p>
+                <p className="text-xs text-muted-foreground">Boolean expression for access control</p>
             </div>
         )}
 
         {selectedNode.type === 'event' && (
             <div className="space-y-3">
-                <Label className="text-xs text-gray-400 uppercase font-bold">Event Parameters</Label>
+                <Label className="text-xs text-muted-foreground uppercase font-bold">Event Parameters</Label>
                 <Input 
                     value={selectedNode.metadata?.params || ''}
                     onChange={(e) => handleMetadataChange('params', e.target.value)}
-                    className="bg-black border-white/20 text-white font-mono text-xs"
+                    className="bg-background border-border text-foreground font-mono text-xs"
                     placeholder="address indexed from, uint256 amount"
                 />
-                <p className="text-xs text-gray-500">Define event parameters</p>
+                <p className="text-xs text-muted-foreground">Define event parameters</p>
             </div>
         )}
 
-        <div className="pt-4 border-t border-white/10">
-            <div className="text-xs text-gray-500 font-mono mb-4">
+        <div className="pt-4 border-t border-border">
+            <div className="text-xs text-muted-foreground font-mono mb-4">
                 ID: {selectedNode.id}<br/>
                 X: {Math.round(selectedNode.position.x)} Y: {Math.round(selectedNode.position.y)}
             </div>
             <Button 
                 variant="destructive" 
-                className="w-full bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20"
+                className="w-full"
                 onClick={() => onDeleteNode(selectedNode.id)}
             >
                 <Trash2 className="w-4 h-4 mr-2" /> Delete Node

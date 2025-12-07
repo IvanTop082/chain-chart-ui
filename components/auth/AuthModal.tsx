@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-context';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -23,6 +24,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModalProps) {
+  const { theme } = useTheme();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,13 +80,12 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-
-          <DialogTitle className="text-3xl font-bold text-white">
+          <DialogTitle className="text-3xl font-bold text-foreground">
             {mode === 'signup' ? 'Create Account' : 'Welcome Back'}
           </DialogTitle>
-          <DialogDescription className="text-gray-400 text-base">
+          <DialogDescription className="text-muted-foreground text-base">
             {mode === 'signup' 
               ? 'Start building smart contracts visually' 
               : 'Sign in to continue building'}
@@ -93,32 +94,32 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-300">Email</Label>
+            <Label htmlFor="email" className="text-foreground">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="pl-10 bg-black border-white/20 text-white"
+                className="pl-10 bg-background border-border text-foreground"
                 required
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-300">Password</Label>
+            <Label htmlFor="password" className="text-foreground">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="pl-10 bg-black border-white/20 text-white"
+                className="pl-10 bg-background border-border text-foreground"
                 required
                 minLength={6}
               />
@@ -126,13 +127,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
           </div>
 
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
               {error}
             </div>
           )}
 
           {message && (
-            <div className="p-3 rounded-lg bg-emerald-green/10 border border-emerald-green/20 text-emerald-green text-sm">
+            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
               {message}
             </div>
           )}
@@ -140,19 +141,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-12 text-black font-bold transition-all"
-            style={{
-              backgroundColor: '#F4E409',
-              boxShadow: '0 0 20px rgba(244, 228, 9, 0.4)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#DCD008';
-              e.currentTarget.style.boxShadow = '0 0 30px rgba(244, 228, 9, 0.6)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#F4E409';
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(244, 228, 9, 0.4)';
-            }}
+            className="w-full h-12 bg-primary text-primary-foreground font-bold hover:opacity-90 transition-all"
           >
             {loading ? (
               <>
@@ -172,7 +161,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
               setError(null);
               setMessage(null);
             }}
-            className="text-sm text-gray-400 hover:text-neon-yellow transition-colors"
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             {mode === 'signin' 
               ? "Don't have an account? Sign up" 

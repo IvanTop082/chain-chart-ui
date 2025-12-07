@@ -1,0 +1,13 @@
+node_modules
+.next
+.env.local
+.env*.local
+generated_contracts
+__pycache__
+*.pyc
+*.nef
+*.manifest.json
+bin/
+obj/
+compiled/
+

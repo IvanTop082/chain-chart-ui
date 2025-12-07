@@ -1,9 +1,47 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import ShapeNode from './ShapeNode';
+import { useTheme } from '@/lib/theme-context';
+
+// Types
+interface Node {
+  id: string;
+  type: string;
+  label: string;
+  value?: string;
+  position: { x: number; y: number };
+  metadata?: Record<string, unknown>;
+  connections?: { inputs: unknown[]; outputs: unknown[] };
+}
+
+interface Edge {
+  from: string;
+  to: string;
+  id?: string;
+}
+
+interface Transform {
+  x: number;
+  y: number;
+  k: number;
+}
 
 // Constants
 const GRID_SIZE = 20; // 10px grid for snapping, visual 20px
 const SNAP_SIZE = 10;
+
+interface CanvasProps {
+  nodes: Node[];
+  edges: Edge[];
+  onNodesChange: (nodes: Node[]) => void;
+  onEdgesChange: (edges: Edge[]) => void;
+  onSelectNode: (nodeId: string | null) => void;
+  selectedNodeId: string | null;
+  onConnect?: (from: string, to: string) => void;
+  onRemoveEdge?: (edgeIndex: number) => void;
+  onViewChange?: (transform: Transform) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+}
 
 export default function Canvas({ 
     nodes, 
@@ -13,11 +51,13 @@ export default function Canvas({
     onSelectNode, 
     selectedNodeId,
     onConnect,
+    onRemoveEdge,
     onViewChange,
     onDrop,
     onDragOver
-}) {
-    const containerRef = useRef(null);
+}: CanvasProps) {
+    const { theme } = useTheme();
+    const containerRef = useRef<HTMLDivElement>(null);
     const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
 
     // Report view change
@@ -28,23 +68,23 @@ export default function Canvas({
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     
     // Node Dragging State
-    const [draggingNodeId, setDraggingNodeId] = useState(null);
+    const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
     const [nodeDragStart, setNodeDragStart] = useState({ x: 0, y: 0 });
     
     // Connection Dragging State
-    const [connecting, setConnecting] = useState(null); // { nodeId, portPosition, startX, startY }
+    const [connecting, setConnecting] = useState<{ nodeId: string; portId: string; portPosition: string; startX: number; startY: number } | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     // --- Helpers ---
-    const screenToWorld = (sx, sy) => ({
+    const screenToWorld = (sx: number, sy: number): { x: number; y: number } => ({
         x: (sx - transform.x) / transform.k,
         y: (sy - transform.y) / transform.k
     });
 
-    const snapToGrid = (val) => Math.round(val / SNAP_SIZE) * SNAP_SIZE;
+    const snapToGrid = (val: number): number => Math.round(val / SNAP_SIZE) * SNAP_SIZE;
 
     // --- Zoom / Pan ---
-    const handleWheel = (e) => {
+    const handleWheel = (e: React.WheelEvent) => {
         if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             const zoomIntensity = 0.1;
@@ -52,6 +92,7 @@ export default function Canvas({
             const factor = 1 + (direction * zoomIntensity);
             
             // Calculate zoom pivot
+            if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -67,8 +108,9 @@ export default function Canvas({
         }
     };
 
-    const handleMouseDown = (e) => {
+    const handleMouseDown = (e: React.MouseEvent) => {
         // Middle mouse or Space+Click to pan
+        if (!containerRef.current) return;
         if (e.button === 1 || (e.button === 0 && e.target === containerRef.current)) {
             setIsDraggingCanvas(true);
             setDragStart({ x: e.clientX, y: e.clientY });
@@ -76,41 +118,47 @@ export default function Canvas({
         }
 
         // Check for Port Click (Start Connection)
-        const port = e.target.closest('[data-port-id]');
+        const port = (e.target as HTMLElement).closest('[data-port-id]');
         if (port) {
             e.stopPropagation();
             const portId = port.getAttribute('data-port-id');
             const portType = port.getAttribute('data-port-type');
+            if (!portId || !portType) return;
             const [nodeId, position] = portId.split(':');
             
             // Only start dragging from output ports for now (simplified)
             if (portType === 'output') {
+                if (!containerRef.current) return;
                 const rect = containerRef.current.getBoundingClientRect();
                 const worldPos = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
                 
                 // Snap start position to node port exact location
                 const node = nodes.find(n => n.id === nodeId);
+                if (!node) return;
                 const portOffset = getPortOffset(position);
                 const startX = node.position.x + portOffset.x;
                 const startY = node.position.y + portOffset.y;
 
-                setConnecting({ nodeId, portId, startX, startY });
+                setConnecting({ nodeId, portId, portPosition: position, startX, startY });
                 setMousePos({ x: startX, y: startY }); // Initialize mousePos
             }
             return;
         }
 
         // Check for Node Click (Start Drag or Select)
-        const nodeEl = e.target.closest('[data-node-id]');
+        const nodeEl = (e.target as HTMLElement).closest('[data-node-id]');
         if (nodeEl) {
             const id = nodeEl.getAttribute('data-node-id');
+            if (!id) return;
             onSelectNode(id);
             setDraggingNodeId(id);
             
             // Calculate offset within node
+            if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
             const worldPos = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
             const node = nodes.find(n => n.id === id);
+            if (!node) return;
             setNodeDragStart({ 
                 x: worldPos.x - node.position.x, 
                 y: worldPos.y - node.position.y 
@@ -120,7 +168,8 @@ export default function Canvas({
         }
     };
 
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
         
         // Pan Canvas
@@ -148,19 +197,19 @@ export default function Canvas({
         }
     };
 
-    const handleMouseUp = (e) => {
+    const handleMouseUp = (e: React.MouseEvent) => {
         setIsDraggingCanvas(false);
         setDraggingNodeId(null);
         
         // Finish Connection
         if (connecting) {
-            const port = e.target.closest('[data-port-id]');
+            const port = (e.target as HTMLElement).closest('[data-port-id]');
             if (port) {
                 const targetPortId = port.getAttribute('data-port-id');
                 const targetPortType = port.getAttribute('data-port-type');
                 
                 // Valid connection: Output -> Input, different nodes
-                if (targetPortType === 'input' && !targetPortId.startsWith(connecting.nodeId)) {
+                if (targetPortId && targetPortType && targetPortType === 'input' && !targetPortId.startsWith(connecting.nodeId) && onConnect) {
                     onConnect(connecting.portId, targetPortId);
                 }
             }
@@ -169,7 +218,7 @@ export default function Canvas({
     };
 
     // --- Rendering Helpers ---
-    const getPortOffset = (pos) => {
+    const getPortOffset = (pos: string): { x: number; y: number } => {
         const size = 100;
         const half = 50;
         if (pos === 'top') return { x: half, y: 0 };
@@ -179,7 +228,7 @@ export default function Canvas({
         return { x: half, y: half };
     };
 
-    const getNodePortPosition = (nodeId, portPos) => {
+    const getNodePortPosition = (nodeId: string, portPos: string): { x: number; y: number } => {
         const node = nodes.find(n => n.id === nodeId);
         if (!node) return { x: 0, y: 0 };
         const offset = getPortOffset(portPos);
@@ -187,11 +236,12 @@ export default function Canvas({
     };
 
     // --- Drag & Drop Handlers ---
-    const handleDropInternal = (e) => {
+    const handleDropInternal = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (onDrop) {
             // Calculate world coordinates from screen coordinates
+            if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
             const screenX = e.clientX - rect.left;
             const screenY = e.clientY - rect.top;
@@ -218,7 +268,7 @@ export default function Canvas({
         }
     };
 
-    const handleDragOverInternal = (e) => {
+    const handleDragOverInternal = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (onDragOver) {
@@ -228,11 +278,16 @@ export default function Canvas({
         }
     };
 
+    // Theme-aware colors
+    const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const edgeColor = theme === 'dark' ? '#10b981' : '#059669'; // Emerald
+    const connectingColor = theme === 'dark' ? '#f59e0b' : '#d97706'; // Amber
+    
     // --- Render ---
     return (
         <div 
             ref={containerRef}
-            className="w-full h-full bg-black relative overflow-hidden cursor-default select-none"
+            className="w-full h-full bg-background relative overflow-hidden cursor-default select-none"
             onWheel={handleWheel}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -243,9 +298,9 @@ export default function Canvas({
         >
             {/* Grid Background */}
             <div 
-                className="absolute inset-0 pointer-events-none opacity-20"
+                className="absolute inset-0 pointer-events-none opacity-30"
                 style={{
-                    backgroundImage: `linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)`,
+                    backgroundImage: `linear-gradient(${gridColor} 1px, transparent 1px), linear-gradient(90deg, ${gridColor} 1px, transparent 1px)`,
                     backgroundSize: `${GRID_SIZE * transform.k}px ${GRID_SIZE * transform.k}px`,
                     backgroundPosition: `${transform.x}px ${transform.y}px`
                 }}
@@ -257,7 +312,7 @@ export default function Canvas({
                 style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.k})` }}
             >
                 {/* Edges Layer (SVG) */}
-                <svg className="overflow-visible absolute inset-0 pointer-events-none z-0">
+                <svg className="overflow-visible absolute inset-0 z-0">
                     {edges.map((edge, i) => {
                         const [sourceId, sourcePos] = edge.from.split(':');
                         const [targetId, targetPos] = edge.to.split(':');
@@ -270,15 +325,40 @@ export default function Canvas({
                         const path = `M ${start.x} ${start.y} C ${start.x + controlX} ${start.y}, ${end.x - controlX} ${end.y}, ${end.x} ${end.y}`;
                         
                         return (
-                            <path 
-                                key={edge.id || i}
-                                d={path}
-                                stroke="#00ff7f"
-                                strokeWidth="2"
-                                fill="none"
-                                className="transition-all duration-300 opacity-60"
-                                style={{ filter: 'drop-shadow(0 0 2px #00ff7f)' }}
-                            />
+                            <g key={edge.id || i}>
+                                {/* Clickable edge path (wider stroke for easier clicking) */}
+                                <path 
+                                    d={path}
+                                    stroke="transparent"
+                                    strokeWidth="12"
+                                    fill="none"
+                                    className="cursor-pointer"
+                                    style={{ pointerEvents: 'all' }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Only delete on single click if Ctrl/Cmd is held (to avoid accidental deletions)
+                                        if (onRemoveEdge && (e.ctrlKey || e.metaKey)) {
+                                            onRemoveEdge(i);
+                                        }
+                                    }}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (onRemoveEdge) {
+                                            onRemoveEdge(i);
+                                        }
+                                    }}
+                                />
+                                {/* Visible edge path */}
+                                <path 
+                                    d={path}
+                                    stroke={edgeColor}
+                                    strokeWidth="2"
+                                    fill="none"
+                                    className="transition-all duration-300 opacity-70 pointer-events-none"
+                                    style={{ filter: `drop-shadow(0 0 3px ${edgeColor}80)` }}
+                                />
+                            </g>
                         );
                     })}
                     
@@ -286,11 +366,12 @@ export default function Canvas({
                     {connecting && (
                          <path 
                             d={`M ${connecting.startX} ${connecting.startY} C ${connecting.startX + 50} ${connecting.startY}, ${mousePos.x - 50} ${mousePos.y}, ${mousePos.x} ${mousePos.y}`}
-                            stroke="#ffee58"
+                            stroke={connectingColor}
                             strokeWidth="2"
                             strokeDasharray="5,5"
                             fill="none"
                             className="animate-pulse"
+                            style={{ filter: `drop-shadow(0 0 3px ${connectingColor}80)` }}
                         />
                     )}
                 </svg>
@@ -306,11 +387,11 @@ export default function Canvas({
             </div>
 
             {/* Controls Overlay */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-2 bg-black/50 backdrop-blur p-2 rounded border border-white/10">
-                <div className="text-xs text-gray-400 font-mono">
+            <div className="absolute bottom-4 right-4 flex flex-col gap-2 bg-card/80 backdrop-blur-sm p-2 rounded-lg border border-border shadow-lg">
+                <div className="text-xs text-muted-foreground font-mono">
                     Zoom: {Math.round(transform.k * 100)}%
                 </div>
-                <div className="text-[10px] text-gray-500 font-mono">
+                <div className="text-[10px] text-muted-foreground/70 font-mono">
                     Mid-Click: Pan<br/>Ctrl+Scroll: Zoom
                 </div>
             </div>

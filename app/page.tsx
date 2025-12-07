@@ -46,7 +46,7 @@ export default function Home() {
     const draftProjects = projects.filter(p => p.status === 'draft').length;
 
     return (
-      <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
+      <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
         <Navigation />
         <div className="flex-1 overflow-y-auto scrollbar-hide">
           <div className="max-w-7xl mx-auto px-6 py-8">
@@ -56,10 +56,10 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               className="mb-8"
             >
-              <h1 className="text-4xl font-bold text-white mb-2">
+              <h1 className="text-4xl font-bold text-foreground mb-2">
                 Welcome back{user.email ? `, ${user.email.split('@')[0]}` : ''}! 👋
               </h1>
-              <p className="text-gray-400">Ready to build your next smart contract?</p>
+              <p className="text-muted-foreground">Ready to build your next smart contract?</p>
             </motion.div>
 
             {/* Stats Grid */}
@@ -99,8 +99,8 @@ export default function Home() {
                   </Link>
                 </div>
                 {projectsLoading ? (
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
-                    <div className="text-gray-400">Loading projects...</div>
+                  <div className="bg-card/50 border border-border rounded-xl p-8 text-center">
+                    <div className="text-muted-foreground">Loading projects...</div>
                   </div>
                 ) : recentProjects.length > 0 ? (
                   <div className="space-y-3">
@@ -109,10 +109,10 @@ export default function Home() {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
-                    <Box className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">No projects yet</h3>
-                    <p className="text-gray-400 mb-4">Create your first smart contract to get started</p>
+                  <div className="bg-card/50 border border-border rounded-xl p-8 text-center">
+                    <Box className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-foreground mb-2">No projects yet</h3>
+                    <p className="text-muted-foreground mb-4">Create your first smart contract to get started</p>
                     <Link href={createPageUrl('Builder')}>
                       <Button className="bg-neon-yellow text-black hover:bg-[#DCD008] font-bold">
                         <Plus className="w-4 h-4 mr-2" /> Create Project
@@ -125,16 +125,16 @@ export default function Home() {
               {/* Advice & Tips Sidebar */}
               <div className="space-y-6">
                 {/* Quick Actions */}
-                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-neon-yellow" />
+                <div className="bg-card/50 border border-border rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" />
                     Quick Actions
                   </h3>
                   <div className="space-y-2">
                     <Link href={createPageUrl('Builder')}>
                       <Button 
                         variant="ghost" 
-                        className="w-full justify-start text-white hover:bg-white/10"
+                        className="w-full justify-start text-foreground hover:bg-accent"
                       >
                         <Plus className="w-4 h-4 mr-2" /> New Project
                       </Button>
@@ -142,7 +142,7 @@ export default function Home() {
                     <Link href={createPageUrl('Contracts')}>
                       <Button 
                         variant="ghost" 
-                        className="w-full justify-start text-white hover:bg-white/10"
+                        className="w-full justify-start text-foreground hover:bg-accent"
                       >
                         <FileCode className="w-4 h-4 mr-2" /> My Contracts
                       </Button>
@@ -151,9 +151,9 @@ export default function Home() {
                 </div>
 
                 {/* Tips & Advice */}
-                <div className="bg-gradient-to-br from-neon-yellow/10 to-emerald-green/10 border border-neon-yellow/20 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-neon-yellow" />
+                <div className="bg-gradient-to-br from-primary/10 to-emerald-500/10 border border-primary/20 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5 text-primary" />
                     Pro Tips
                   </h3>
                   <div className="space-y-4 text-sm">
@@ -174,9 +174,9 @@ export default function Home() {
 
                 {/* Getting Started */}
                 {totalProjects === 0 && (
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-3">Getting Started</h3>
-                    <ol className="space-y-3 text-sm text-gray-300">
+                  <div className="bg-card/50 border border-border rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-foreground mb-3">Getting Started</h3>
+                    <ol className="space-y-3 text-sm text-muted-foreground">
                       <li className="flex gap-3">
                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-neon-yellow text-black font-bold flex items-center justify-center text-xs">1</span>
                         <span>Click "New Project" to create your first contract</span>
@@ -224,7 +224,7 @@ export default function Home() {
           transition={{ duration: 0.8 }}
         >
           <div 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card/50 border border-border mb-8 backdrop-blur-md"
             style={{
               boxShadow: '0 0 15px rgba(255, 255, 255, 0.1), inset 0 0 15px rgba(255, 255, 255, 0.05)'
             }}
@@ -236,10 +236,10 @@ export default function Home() {
                 boxShadow: '0 0 8px #F4E409, 0 0 16px rgba(244, 228, 9, 0.5)'
               }}
             />
-            <span className="text-sm font-medium text-gray-300">ChainChart Builder v1.0 is live</span>
+            <span className="text-sm font-medium text-muted-foreground">ChainChart Builder v1.0 is live</span>
           </div>
           
-          <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-white mb-6 leading-tight">
+          <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-foreground mb-6 leading-tight">
             Build Smart Contracts <br />
             <span 
               className="text-transparent bg-clip-text inline-block relative"
@@ -252,7 +252,7 @@ export default function Home() {
             </span>
           </h1>
           
-          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
             No code required. Drag, drop, and connect logic pieces to create 
             secure, audit-ready smart contracts for Ethereum and EVM chains.
           </p>
@@ -319,7 +319,7 @@ export default function Home() {
               <Link href={createPageUrl('Contracts')}>
                 <Button 
                   variant="outline" 
-                  className="h-14 px-8 text-lg border-white/20 text-white hover:bg-white/10 rounded-full backdrop-blur-md transition-all"
+                  className="h-14 px-8 text-lg border-border text-foreground hover:bg-accent rounded-full backdrop-blur-md transition-all"
                   style={{
                     boxShadow: '0 0 15px rgba(255, 255, 255, 0.1), inset 0 0 15px rgba(255, 255, 255, 0.05)'
                   }}
@@ -398,14 +398,14 @@ export default function Home() {
 function StatCard({ icon: Icon, label, value, color, bgColor }: { icon: any; label: string; value: number; color: string; bgColor: string }) {
   return (
     <div 
-      className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all"
+      className="bg-card/50 border border-border rounded-xl p-6 hover:bg-card transition-all"
       style={{
         boxShadow: '0 0 20px rgba(0, 0, 0, 0.3)'
       }}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-400 mb-1">{label}</p>
+          <p className="text-sm text-muted-foreground mb-1">{label}</p>
           <p className={`text-3xl font-bold ${color}`}>{value}</p>
         </div>
         <div 
@@ -425,17 +425,17 @@ function ProjectCard({ project }: { project: Project }) {
   return (
     <div
       onClick={() => router.push(`${createPageUrl('Builder')}?projectId=${project.id}`)}
-      className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-neon-yellow/50 hover:bg-white/10 transition-all cursor-pointer group"
+      className="bg-card/50 border border-border rounded-xl p-4 hover:border-primary/50 hover:bg-card transition-all cursor-pointer group"
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-white mb-1 group-hover:text-neon-yellow transition-colors">
+          <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
             {project.name}
           </h3>
-          <p className="text-sm text-gray-400 mb-2 line-clamp-1">
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
             {project.description || 'No description'}
           </p>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {new Date(project.updated_at).toLocaleDateString()}
@@ -449,7 +449,7 @@ function ProjectCard({ project }: { project: Project }) {
             </span>
           </div>
         </div>
-        <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-neon-yellow transition-colors ml-4" />
+        <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors ml-4" />
       </div>
     </div>
   );
@@ -458,18 +458,18 @@ function ProjectCard({ project }: { project: Project }) {
 function TipItem({ title, description }: { title: string; description: string }) {
   return (
     <div>
-      <h4 className="font-semibold text-white mb-1">{title}</h4>
-      <p className="text-gray-300 leading-relaxed">{description}</p>
+      <h4 className="font-semibold text-foreground mb-1">{title}</h4>
+      <p className="text-muted-foreground leading-relaxed">{description}</p>
     </div>
   );
 }
 
-function FeatureCard({ icon: Icon, title, desc, color }) {
+function FeatureCard({ icon: Icon, title, desc, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; title: string; desc: string; color: string }) {
   const colorValue = color.includes('neon-yellow') ? '#F4E409' : color.includes('emerald-green') ? '#00ff7f' : '#a855f7';
   
   return (
     <div 
-      className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all group relative overflow-hidden"
+      className="p-6 rounded-2xl bg-card/50 border border-border backdrop-blur-sm hover:bg-card transition-all group relative overflow-hidden"
       style={{
         boxShadow: '0 0 20px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.02)'
       }}
@@ -483,7 +483,7 @@ function FeatureCard({ icon: Icon, title, desc, color }) {
       }}
     >
       <div 
-        className="w-12 h-12 rounded-xl bg-black flex items-center justify-center mb-4 border transition-all relative overflow-hidden"
+        className="w-12 h-12 rounded-xl bg-background flex items-center justify-center mb-4 border transition-all relative overflow-hidden"
         style={{
           borderColor: 'rgba(255, 255, 255, 0.1)',
           boxShadow: `0 0 10px ${colorValue}20`
@@ -504,8 +504,8 @@ function FeatureCard({ icon: Icon, title, desc, color }) {
           }}
         />
       </div>
-      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-      <p className="text-gray-400 leading-relaxed">{desc}</p>
+      <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed">{desc}</p>
     </div>
   );
 }

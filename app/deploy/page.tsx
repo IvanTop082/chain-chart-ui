@@ -48,7 +48,7 @@ export default function Deploy() {
         </Card>
 
         {/* Deploy Actions */}
-        <Card className="bg-black border border-white/10 p-6 flex flex-col justify-between shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+        <Card className="bg-card/50 border border-border p-6 flex flex-col justify-between shadow-lg">
             <div>
                 <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                     <Globe className="w-5 h-5 text-emerald-green" /> Network Status
@@ -91,7 +91,7 @@ export default function Deploy() {
   );
 }
 
-function DetailRow({ label, value, valueColor = "text-gray-300" }) {
+function DetailRow({ label, value, valueColor = "text-gray-300" }: { label: string; value: string; valueColor?: string }) {
     return (
         <div className="flex justify-between items-center text-sm">
             <span className="text-gray-500">{label}</span>
@@ -100,7 +100,7 @@ function DetailRow({ label, value, valueColor = "text-gray-300" }) {
     )
 }
 
-function StepIndicator({ status, label }) {
+function StepIndicator({ status, label }: { status: 'pending' | 'current' | 'completed'; label: string }) {
     // status: pending, current, completed
     const styles = {
         pending: "border-white/10 text-gray-600",

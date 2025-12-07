@@ -48,8 +48,8 @@ export function ConfirmDialog({
               </div>
             )}
             <div>
-              <DialogTitle className="text-white">{title}</DialogTitle>
-              <DialogDescription className="text-gray-400 mt-1">
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription className="mt-1">
                 {description}
               </DialogDescription>
             </div>
@@ -59,7 +59,7 @@ export function ConfirmDialog({
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="text-gray-400 hover:text-white"
+            className="text-muted-foreground hover:text-foreground"
           >
             {cancelText}
           </Button>
@@ -67,16 +67,8 @@ export function ConfirmDialog({
             onClick={handleConfirm}
             className={
               variant === 'destructive'
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-neon-yellow text-black hover:bg-[#DCD008] font-bold'
-            }
-            style={
-              variant === 'destructive'
-                ? {}
-                : {
-                    backgroundColor: '#F4E409',
-                    boxShadow: '0 0 20px rgba(244, 228, 9, 0.4)',
-                  }
+                ? 'bg-destructive text-destructive-foreground hover:opacity-90'
+                : 'bg-primary text-primary-foreground hover:opacity-90 font-bold'
             }
           >
             {confirmText}

@@ -3,15 +3,17 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Home, Box, Plus, LogOut, Menu, X } from 'lucide-react';
+import { Home, Box, Plus, LogOut, Menu, X, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-context';
 import { createPageUrl } from '@/utils';
 
 export default function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!user) {
@@ -32,14 +34,14 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="h-16 border-b border-white/10 bg-black/80 backdrop-blur-md sticky top-0 z-50">
+    <nav className="h-16 border-b border-border bg-background/60 backdrop-blur-xl sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         {/* Logo/Brand */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neon-yellow to-emerald-green flex items-center justify-center">
-            <Box className="w-5 h-5 text-black" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center">
+            <Box className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-white text-lg">ChainChart</span>
+          <span className="font-bold text-foreground text-lg">ChainChart</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -53,13 +55,9 @@ export default function Navigation() {
                   variant={active ? "default" : "ghost"}
                   className={`h-10 px-4 ${
                     active
-                      ? 'bg-neon-yellow text-black hover:bg-[#DCD008] font-bold'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-primary text-primary-foreground hover:opacity-90 font-bold'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   }`}
-                  style={active ? {
-                    backgroundColor: '#F4E409',
-                    boxShadow: '0 0 15px rgba(244, 228, 9, 0.3)'
-                  } : {}}
                 >
                   <Icon className="w-4 h-4 mr-2" />
                   {item.label}
@@ -73,8 +71,17 @@ export default function Navigation() {
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </Button>
+          <Button
+            variant="ghost"
             size="sm"
-            className="text-gray-400 hover:text-white hidden sm:flex"
+            className="text-muted-foreground hover:text-foreground hidden sm:flex"
             onClick={async () => {
               await signOut();
               router.push('/');
@@ -88,7 +95,7 @@ export default function Navigation() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-gray-400 hover:text-white"
+            className="md:hidden text-muted-foreground hover:text-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -98,7 +105,7 @@ export default function Navigation() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/10 bg-black/95 backdrop-blur-md">
+        <div className="md:hidden border-t border-border bg-background/80 backdrop-blur-xl">
           <div className="px-4 py-3 space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -113,13 +120,9 @@ export default function Navigation() {
                     variant={active ? "default" : "ghost"}
                     className={`w-full justify-start h-10 ${
                       active
-                        ? 'bg-neon-yellow text-black hover:bg-[#DCD008] font-bold'
-                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        ? 'bg-primary text-primary-foreground hover:opacity-90 font-bold'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                     }`}
-                    style={active ? {
-                      backgroundColor: '#F4E409',
-                      boxShadow: '0 0 15px rgba(244, 228, 9, 0.3)'
-                    } : {}}
                   >
                     <Icon className="w-4 h-4 mr-2" />
                     {item.label}
@@ -129,7 +132,15 @@ export default function Navigation() {
             })}
             <Button
               variant="ghost"
-              className="w-full justify-start h-10 text-gray-400 hover:text-white hover:bg-white/5"
+              className="w-full justify-start h-10 text-muted-foreground hover:text-foreground hover:bg-accent"
+              onClick={toggleTheme}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start h-10 text-muted-foreground hover:text-foreground hover:bg-accent"
               onClick={async () => {
                 await signOut();
                 router.push('/');
