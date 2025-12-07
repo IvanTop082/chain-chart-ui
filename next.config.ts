@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   // Disable ESLint during build
   eslint: {
     ignoreDuringBuilds: true,
