@@ -19,6 +19,27 @@ const nextConfig: NextConfig = {
         buffer: require.resolve('buffer'),
       };
     }
+    // Exclude better-sqlite3 from bundling (not needed for Supabase)
+    config.externals = config.externals || [];
+    if (typeof config.externals === 'function') {
+      const originalExternals = config.externals;
+      config.externals = [
+        ...(Array.isArray(originalExternals) ? originalExternals : []),
+        ({ request }, callback) => {
+          if (request && request.includes('better-sqlite3')) {
+            return callback(null, 'commonjs ' + request);
+          }
+          if (typeof originalExternals === 'function') {
+            return originalExternals({ request }, callback);
+          }
+          callback();
+        },
+      ];
+    } else if (Array.isArray(config.externals)) {
+      config.externals.push('better-sqlite3');
+    } else {
+      config.externals = [config.externals, 'better-sqlite3'];
+    }
     return config;
   },
 };
