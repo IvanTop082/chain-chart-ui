@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig = {
-  // Disable ESLint during build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   // Transpile wallet adapter packages for React 19 compatibility
   transpilePackages: [
     '@rentfuse-labs/neo-wallet-adapter-base',
@@ -34,6 +30,6 @@ const nextConfig = {
     }
     return config;
   },
-};
+} satisfies NextConfig;
 
 export default nextConfig;
