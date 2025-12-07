@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "postinstall": "rm -rf node_modules/better-sqlite3 || rmdir /s /q node_modules\\better-sqlite3 2>nul || true"
+    "lint": "eslint"
   },
   "dependencies": {
     "@ant-design/icons": "^4.6.4",
